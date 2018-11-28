@@ -140,7 +140,10 @@ public class Robot extends IterativeRobot {
 		{
 			System.out.println("The scale is on the left");
 			//Put left auto code here
-		} else {
+		} 
+
+		else 
+		{
 			System.out.println("The scale is on the right");
 			//Put right auto code here
 		}
@@ -170,15 +173,18 @@ public class Robot extends IterativeRobot {
 	 * This function is called periodically during autonomous.
 	 */
 	@Override
-	public void autonomousPeriodic() {
+	public void autonomousPeriodic()
+	{
 		SmartDashboard.putNumber("Distance Traveled0", enc_0.getDistance());
 		SmartDashboard.putNumber("Distance Traveled1", enc_1.getDistance());
 		String gameData;
 		gameData = DriverStation.getInstance().getGameSpecificMessage();
 		
-		if (gameData.charAt(0) == 'L'&& autoPositionChooser.getSelected() == "Left" ) {
-			if(autoMode==autoModes.FIRST_RUN) {
-			m_timer.reset();
+		if (gameData.charAt(0) == 'L'&& autoPositionChooser.getSelected() == "Left" ) 
+		{
+			if(autoMode==autoModes.FIRST_RUN) 
+			{
+				m_timer.reset();
 		
 				if ((enc_0.getDistance()+enc_1.getDistance())/2 > -90)
 				{
@@ -199,24 +205,30 @@ public class Robot extends IterativeRobot {
 				
 				}	
 			}
-				else if(autoMode==autoModes.CUBE_UP) {
+
+			else if(autoMode==autoModes.CUBE_UP)
+			{
 		
-					if (1< m_timer.get()&& m_timer.get() < 2.9) {
-						l_output.set(ControlMode.PercentOutput, 0.35);
-						r_output.set(ControlMode.PercentOutput,-0.35);
-				
-				
-			}
-					else { 
-						l_output.set(ControlMode.PercentOutput, .00);
-						r_output.set(ControlMode.PercentOutput, .00);
+				if (1< m_timer.get()&& m_timer.get() < 2.9)
+				{
+
+					l_output.set(ControlMode.PercentOutput, 0.35);
+					r_output.set(ControlMode.PercentOutput,-0.35);
+
+				}
+				else 
+				{ 
+					l_output.set(ControlMode.PercentOutput, .00);
+					r_output.set(ControlMode.PercentOutput, .00);
+				}
 			}
 		}
-			}
 		
-		else if (gameData.charAt(0) == 'R'&& autoPositionChooser.getSelected() == "Right" ) {
-			if(autoMode==autoModes.FIRST_RUN) {
-			m_timer.reset();
+		else if (gameData.charAt(0) == 'R'&& autoPositionChooser.getSelected() == "Right" )
+		{
+			if(autoMode==autoModes.FIRST_RUN) 
+			{
+				m_timer.reset();
 		
 				if ((enc_0.getDistance()+enc_1.getDistance())/2 > -90)
 				{
@@ -227,36 +239,40 @@ public class Robot extends IterativeRobot {
 				}
 				else 
 				{
-				m_robotDrive.stopMotor();
-				s_robotDrive.stopMotor();
-				m_timer.reset();
-				m_robotPID.reset();
-				enc_1.reset();
-				enc_0.reset();
-				autoMode = autoModes.CUBE_UP;
+
+					m_robotDrive.stopMotor();
+					s_robotDrive.stopMotor();
+					m_timer.reset();
+					m_robotPID.reset();
+					enc_1.reset();
+					enc_0.reset();
+					autoMode = autoModes.CUBE_UP;
 				
 				}	
 			}
-				else if(autoMode==autoModes.CUBE_UP) {
+			else if(autoMode==autoModes.CUBE_UP)
+			{
 		
-					if (1< m_timer.get()&& m_timer.get() < 2.9) {
+				if (1< m_timer.get()&& m_timer.get() < 2.9) 
+					{
 						l_output.set(ControlMode.PercentOutput, 0.35);
 						r_output.set(ControlMode.PercentOutput,-0.35);
 				
-				
-			}
-					else { 
+					}
+
+					else 
+					{ 
 						l_output.set(ControlMode.PercentOutput, .00);
 						r_output.set(ControlMode.PercentOutput, .00);
+					}
 			}
 		}
-			}
-		
-		
 	
-	else {
-		if(autoMode==autoModes.FIRST_RUN) {
-			m_timer.reset();
+		else 
+		{
+			if(autoMode==autoModes.FIRST_RUN) 
+			{
+				m_timer.reset();
 		
 				if ((enc_0.getDistance()+enc_1.getDistance())/2 > -90)
 				{
@@ -269,15 +285,16 @@ public class Robot extends IterativeRobot {
 				{
 				m_robotDrive.stopMotor();
 				s_robotDrive.stopMotor();
-	}
+				}
+			}
 		}
-	}
 	}
 					
 		
 
 	@Override
-	public void teleopInit() {
+	public void teleopInit() 
+	{
 		enc_0.reset();
 		SmartDashboard.putNumber("Distance Traveled0", enc_0.getDistance());
 		enc_1.reset();
@@ -287,14 +304,15 @@ public class Robot extends IterativeRobot {
 		// continue until interrupted by another command, remove
 		// this line or comment it out.
 		
-		}
+	}
 	
 
 	/**
 	 * This function is called periodically during operator control.
 	 */
 	@Override
-	public void teleopPeriodic() {
+	public void teleopPeriodic() 
+	{
 		SmartDashboard.putNumber("Distance Traveled0", enc_0.getDistance());
 		SmartDashboard.putNumber("Distance Traveled1", enc_1.getDistance());
 		
@@ -302,30 +320,35 @@ public class Robot extends IterativeRobot {
 		double X=m_stick.getX();
 	
 
-		if(Button_1.get()==true) {
+		if(Button_1.get()==true) 
+		{
 			l_output.set(ControlMode.PercentOutput, .6);
 			r_output.set(ControlMode.PercentOutput,-.6);
 		}
 		
 		
 		
-		 else if (Button_2.get()==true) {
+		else if (Button_2.get()==true) 
+		{
 			l_output.set(ControlMode.PercentOutput, -.6);
 			r_output.set(ControlMode.PercentOutput,.6);
 		}
 		
-		else { l_output.set(ControlMode.PercentOutput, 0.00);
-		r_output.set(ControlMode.PercentOutput,00);
+		else 
+		{ 
+			l_output.set(ControlMode.PercentOutput, 0.00);
+			r_output.set(ControlMode.PercentOutput,00);
 		}
 		
 		
-			if(-.1>Y&&Y>-.3)
+		if(-.1>Y&&Y>-.3)
 		{
 			m_robotDrive.arcadeDrive(-.3,.58*Math.tan(X));
 			s_robotDrive.arcadeDrive(-.3,.58*Math.tan(X));
 		
 		}
-		else if (.1>Y&&Y>.3) {
+		else if (.1>Y&&Y>.3)
+		{
 			
 			m_robotDrive.arcadeDrive(.3,.58*Math.tan(X));
 			s_robotDrive.arcadeDrive(.3,.58*Math.tan(X));
@@ -334,11 +357,11 @@ public class Robot extends IterativeRobot {
 		
 		else 
 		{
-		m_robotDrive.arcadeDrive(Y,/*+(a/4))*/.58*Math.tan(X));
-		s_robotDrive.arcadeDrive(Y,/*+(a/4))*/.58*Math.tan(X));
+			m_robotDrive.arcadeDrive(Y,/*+(a/4))*/.58*Math.tan(X));
+			s_robotDrive.arcadeDrive(Y,/*+(a/4))*/.58*Math.tan(X));
 		}
 		
-		}
+	}
 	/**
 	 * This function is called periodically during test mode.
 	 */
