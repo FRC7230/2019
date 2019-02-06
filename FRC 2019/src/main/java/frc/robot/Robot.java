@@ -22,8 +22,17 @@ import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 //import org.usfirst.frc.team7230.robot.commands.ExampleCommand;
+import edu.wpi.first.wpilibj.CameraServer;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 
+import edu.wpi.cscore.CvSink;
+import edu.wpi.cscore.CvSource;
+import edu.wpi.cscore.UsbCamera;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
@@ -32,7 +41,6 @@ import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import edu.wpi.first.wpilibj.PIDSource;
 import edu.wpi.first.wpilibj.PIDSourceType;
 import edu.wpi.first.wpilibj.PIDOutput;
-
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -43,14 +51,14 @@ import edu.wpi.first.wpilibj.PIDOutput;
  */
 
 public class Robot extends IterativeRobot {
-
+	//private Pixy2 pixy = new Pixy2(1);
 	private Encoder
 	enc_0 = new Encoder(0, 1, false, Encoder.EncodingType.k4X);
 	private Encoder
 	enc_1 = new Encoder(2, 3, false, Encoder.EncodingType.k4X);
-	private DifferentialDrive m_robotDrive //main
-			= new DifferentialDrive(new Spark(0), new Spark(2));
-	private DifferentialDrive s_robotDrive //secondary
+		private DifferentialDrive m_robotDrive //main
+				= new DifferentialDrive(new Spark(0), new Spark(2));
+		private DifferentialDrive s_robotDrive //secondary
 	= new DifferentialDrive(new Spark(1), new Spark(3));
 	private TalonSRX l_intake = new TalonSRX(2); 
 	private TalonSRX r_intake = new TalonSRX(1);
@@ -65,6 +73,15 @@ public class Robot extends IterativeRobot {
 	SendableChooser<String> autoPositionChooser;
 	private Button Button_1 = new JoystickButton(m_grab,5),
 			 Button_2 = new JoystickButton(m_grab,6);
+	private	 NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
+	private	 NetworkTableEntry tx = table.getEntry("tx");
+	private  NetworkTableEntry ty = table.getEntry("ty");
+	private  NetworkTableEntry ta = table.getEntry("ta");
+	private  NetworkTableEntry tv = table.getEntry("tv");
+	private UsbCamera camera1 = new UsbCamera("camera_1",0);
+	//private CameraServer camera2 = new UsbCamera(2);
+
+			 
 
 	
 	
@@ -77,6 +94,8 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void robotInit() {
 	
+
+		
 		enc_0.setMaxPeriod(.1);
 		enc_0.setMinRate(10);
 		enc_0.setDistancePerPulse(0.94247779607/12.75*1.21);
@@ -92,7 +111,28 @@ public class Robot extends IterativeRobot {
 		m_robotPID.setPercentTolerance(.01);
 		m_robotPID.setSetpoint(0);
 		m_robotPID.reset();
-	}
+		double b = tv.getDouble(0.0);
+		double x = tx.getDouble(0.0);
+        double y = ty.getDouble(0.0);
+		double area = ta.getDouble(0.0);
+		new Thread(() -> {
+			UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
+			camera.setResolution(640, 480);
+			
+			CvSink cvSink = CameraServer.getInstance().getVideo();
+			CvSource outputStream = CameraServer.getInstance().putVideo("camera1", 640, 480);
+			
+			Mat source = new Mat();
+			Mat output = new Mat();
+			
+			while(!Thread.interrupted()) {
+				cvSink.grabFrame(source);
+				Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
+				outputStream.putFrame(output);
+			}
+		}).start();
+}
+	
 
   /**
    * This function is called every robot packet, no matter the mode. Use
@@ -104,6 +144,16 @@ public class Robot extends IterativeRobot {
    */
   @Override
   public void robotPeriodic() {
+
+	double b = tv.getDouble(0.0);
+	double x = tx.getDouble(0.0);
+	double y = ty.getDouble(0.0);
+	double area = ta.getDouble(0.0);
+	
+	SmartDashboard.putNumber("LimelightTarget", b);
+	SmartDashboard.putNumber("LimelightX", x);
+	SmartDashboard.putNumber("LimelightY", y);
+	SmartDashboard.putNumber("LimelightArea", area);
   }
 
   /**
@@ -139,6 +189,8 @@ public class Robot extends IterativeRobot {
 
     double Y= m_stick.getY();
 		double X=m_stick.getX();
+
+	
     
 		if(-.1>Y&&Y>-.3){
 				
