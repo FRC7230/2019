@@ -7,6 +7,8 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj.SPI.Port;
+import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.IterativeRobot;
@@ -22,6 +24,9 @@ import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.Pixy2.LinkType;
+import frc.robot.links.Link;
+import frc.robot.links.SPILink;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -34,6 +39,8 @@ import edu.wpi.cscore.CvSink;
 import edu.wpi.cscore.CvSource;
 import edu.wpi.cscore.UsbCamera;
 
+import java.awt.Color;
+
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
@@ -41,6 +48,9 @@ import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import edu.wpi.first.wpilibj.PIDSource;
 import edu.wpi.first.wpilibj.PIDSourceType;
 import edu.wpi.first.wpilibj.PIDOutput;
+
+import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.Solenoid;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -58,7 +68,7 @@ public class Robot extends IterativeRobot {
 	enc_1 = new Encoder(2, 3, false, Encoder.EncodingType.k4X);
 		private DifferentialDrive m_robotDrive //main
 				= new DifferentialDrive(new Spark(0), new Spark(2));
-		private DifferentialDrive s_robotDrive //secondary
+	private DifferentialDrive s_robotDrive //secondary
 	= new DifferentialDrive(new Spark(1), new Spark(3));
 	private TalonSRX l_intake = new TalonSRX(2); 
 	private TalonSRX r_intake = new TalonSRX(1);
@@ -72,14 +82,21 @@ public class Robot extends IterativeRobot {
 	private PIDController m_robotPID = new PIDController(1,1,1,1,eSource,eOutput);
 	SendableChooser<String> autoPositionChooser;
 	private Button Button_1 = new JoystickButton(m_grab,5),
-			 Button_2 = new JoystickButton(m_grab,6);
+			 Button_2 = new JoystickButton(m_grab,6),
+			 Button_3 = new JoystickButton(m_grab,2),
+			 Button_11 = new JoystickButton(m_stick,11);
+	private Button trigger = new JoystickButton(m_stick,12);
 	private	 NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
 	private	 NetworkTableEntry tx = table.getEntry("tx");
 	private  NetworkTableEntry ty = table.getEntry("ty");
 	private  NetworkTableEntry ta = table.getEntry("ta");
 	private  NetworkTableEntry tv = table.getEntry("tv");
-	private UsbCamera camera1 = new UsbCamera("camera_1",0);
+	//private UsbCamera camera1 = new UsbCamera("camera0",0);
+	private Pixy2 ourPixy = Pixy2.createInstance(LinkType.SPI);
 	//private CameraServer camera2 = new UsbCamera(2);
+	private Compressor compressor = new Compressor();
+	private Solenoid solenoid_1 = new Solenoid(1);
+
 
 			 
 
@@ -95,7 +112,9 @@ public class Robot extends IterativeRobot {
 	public void robotInit() {
 	
 
-		
+		ourPixy.init();
+		ourPixy.getFPS();
+		System.out.print(ourPixy.getFPS());
 		enc_0.setMaxPeriod(.1);
 		enc_0.setMinRate(10);
 		enc_0.setDistancePerPulse(0.94247779607/12.75*1.21);
@@ -115,7 +134,7 @@ public class Robot extends IterativeRobot {
 		double x = tx.getDouble(0.0);
         double y = ty.getDouble(0.0);
 		double area = ta.getDouble(0.0);
-		new Thread(() -> {
+	/*	new Thread(() -> {
 			UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
 			camera.setResolution(640, 480);
 			
@@ -130,7 +149,8 @@ public class Robot extends IterativeRobot {
 				Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
 				outputStream.putFrame(output);
 			}
-		}).start();
+		}).start(); */
+	
 }
 	
 
@@ -187,9 +207,52 @@ public class Robot extends IterativeRobot {
   @Override
   public void teleopPeriodic() {
 
-    double Y= m_stick.getY();
-		double X=m_stick.getX();
+	
+	double b = tv.getDouble(0.0);
+	double x = tx.getDouble(0.0);
+	double y = ty.getDouble(0.0);
+	double area = ta.getDouble(0.0);
+	
+	SmartDashboard.putNumber("LimelightTarget", b);
+	SmartDashboard.putNumber("LimelightX", x);
+	SmartDashboard.putNumber("LimelightY", y);
+	SmartDashboard.putNumber("LimelightArea", area);
+	double X=m_stick.getX();
+	double Y= m_stick.getY();
+	
+	if(Button_1.get() == true)
+	{
+		compressor.start();
+	}
+	else
+	{
+		compressor.stop();
+	}
+	if(Button_2.get() == true)
+	{
+		solenoid_1.set(true);
+	}
+	if(Button_3.get() == true)
+	{
+		solenoid_1.set(false);
+	}
 
+	if(x > 1 && trigger.get()==true)
+	{
+	    m_robotDrive.arcadeDrive(-.6,(0.1*(x))-0.05);
+		s_robotDrive.arcadeDrive(-.6,(0.1*(x))-0.05);
+		
+	}
+	else if (x < 1.0 && trigger.get()==true)
+	{
+
+		m_robotDrive.arcadeDrive(-.6,(0.1*(x))+0.05);
+		s_robotDrive.arcadeDrive(-.6,(0.1*(x))+0.05);
+	}
+
+
+		
+	/*	 ourPixy.setServos(1, 2);
 	
     
 		if(-.1>Y&&Y>-.3){
@@ -204,15 +267,25 @@ public class Robot extends IterativeRobot {
 			s_robotDrive.arcadeDrive(.3,.58*Math.tan(X));
 			
 		}
-		
+		*/
 		else {
 			
-		m_robotDrive.arcadeDrive(Y,/*+(a/4))*/.58*Math.tan(X));
-		s_robotDrive.arcadeDrive(Y,/*+(a/4))*/.58*Math.tan(X));
+			m_robotDrive.arcadeDrive(Y,/*+(a/4))*/.58*Math.tan(X));
+			s_robotDrive.arcadeDrive(Y,/*+(a/4))*/.58*Math.tan(X));
 		
 		}
-		
-	}
+		if(Button_11.get() == true)
+		{
+			l_output.set(ControlMode.PercentOutput,.5);
+		}
+		else
+		{
+			l_output.set(ControlMode.PercentOutput,0);
+		}
+
+	
+	}	
+	
   
 
   /**
