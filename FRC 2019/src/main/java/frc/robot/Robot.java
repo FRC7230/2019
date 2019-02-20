@@ -66,12 +66,12 @@ public class Robot extends IterativeRobot {
 	enc_0 = new Encoder(0, 1, false, Encoder.EncodingType.k4X);
 	private Encoder
 	enc_1 = new Encoder(2, 3, false, Encoder.EncodingType.k4X);
-		private DifferentialDrive m_robotDrive //main
-				= new DifferentialDrive(new Spark(0), new Spark(2));
+	private DifferentialDrive m_robotDrive //main
+		= new DifferentialDrive(new Spark(0), new Spark(2));
 	private DifferentialDrive s_robotDrive //secondary
-	= new DifferentialDrive(new Spark(1), new Spark(3));
-	private TalonSRX l_intake = new TalonSRX(2); 
-	private TalonSRX r_intake = new TalonSRX(1);
+		= new DifferentialDrive(new Spark(1), new Spark(3));
+	private TalonSRX l_elevator = new TalonSRX(0); 
+	private TalonSRX r_elevator = new TalonSRX(1);
 	private VictorSPX l_output = new VictorSPX(2); 
 	private VictorSPX r_output = new VictorSPX(1); 
 	private Joystick m_stick = new Joystick(0);
@@ -84,7 +84,8 @@ public class Robot extends IterativeRobot {
 	private Button Button_1 = new JoystickButton(m_grab,5),
 			 Button_2 = new JoystickButton(m_grab,6),
 			 Button_3 = new JoystickButton(m_grab,2),
-			 Button_11 = new JoystickButton(m_stick,11);
+			 Button_11 = new JoystickButton(m_stick,11),
+			 Button_10 = new JoystickButton(m_stick,10);
 	private Button trigger = new JoystickButton(m_stick,12);
 	private	 NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
 	private	 NetworkTableEntry tx = table.getEntry("tx");
@@ -252,36 +253,46 @@ public class Robot extends IterativeRobot {
 
 
 		
-	/*	 ourPixy.setServos(1, 2);
+	else{
 	
     
 		if(-.1>Y&&Y>-.3){
 				
-			m_robotDrive.arcadeDrive(-.3,.58*Math.tan(X));
-			s_robotDrive.arcadeDrive(-.3,.58*Math.tan(X));
+			m_robotDrive.arcadeDrive(-.3,0);
+			s_robotDrive.arcadeDrive(-.3,0);
 		
 		}
 		else if (.1>Y&&Y>.3){
 			
-			m_robotDrive.arcadeDrive(.3,.58*Math.tan(X));
-			s_robotDrive.arcadeDrive(.3,.58*Math.tan(X));
+			m_robotDrive.arcadeDrive(.3,X);
+			s_robotDrive.arcadeDrive(.3,X);
 			
 		}
-		*/
+
 		else {
 			
-			m_robotDrive.arcadeDrive(Y,/*+(a/4))*/.58*Math.tan(X));
-			s_robotDrive.arcadeDrive(Y,/*+(a/4))*/.58*Math.tan(X));
+			m_robotDrive.arcadeDrive(Y,X);
+			s_robotDrive.arcadeDrive(Y,X);
 		
 		}
+	}
 		if(Button_11.get() == true)
 		{
-			l_output.set(ControlMode.PercentOutput,.5);
+			r_elevator.set(ControlMode.PercentOutput,.38);
+			l_elevator.set(ControlMode.PercentOutput,-.38);
 		}
-		else
+		else if(Button_10.get() == true)
 		{
-			l_output.set(ControlMode.PercentOutput,0);
+			r_elevator.set(ControlMode.PercentOutput,-.1);
+			l_elevator.set(ControlMode.PercentOutput,.1);
 		}
+	//	else
+	//	{
+	//		r_elevator.set(ControlMode.PercentOutput,.1);
+	//		l_elevator.set(ControlMode.PercentOutput,-.1);
+	//	}
+		
+
 
 	
 	}	
