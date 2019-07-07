@@ -46,7 +46,6 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
-
 import edu.wpi.first.wpilibj.PIDSource;
 import edu.wpi.first.wpilibj.PIDSourceType;
 import edu.wpi.first.wpilibj.PIDOutput;
@@ -199,22 +198,54 @@ public class Robot extends IterativeRobot {
   public void autonomousInit() {
    
   }
+  //selecting correct pipelines for the limelight camera
+  public void limelightMovement ()
+  {
+	double X=m_stick.getX();
+	double Y= m_stick.getY();
+	double b = tv.getDouble(0.0);
+	double x = tx.getDouble(0.0);
+	double y = ty.getDouble(0.0);
+	double area = ta.getDouble(0.0);
+	
+	SmartDashboard.putNumber("LimelightTarget", b);
+	SmartDashboard.putNumber("LimelightX", x);
+	SmartDashboard.putNumber("LimelightY", y);
+	SmartDashboard.putNumber("LimelightArea", area);
+	if(x>1) // If target is on the right of the feild of view
+		{
+		m_robotDrive.arcadeDrive(.7,.045*x-.045); // Drive forward and turn right based on severity of x-value offset
+		s_robotDrive.arcadeDrive(.7,.045*x-.045);
+		//System.out.println("x = " + x);
+		}
+		else if(x<1) // If target is in left of feild of view
+		{
+		m_robotDrive.arcadeDrive(.7,.045*x+.045); // Drive forward and turn left based on severity of X offset
+		s_robotDrive.arcadeDrive(.7,.045*x+.045);
+		
+		}
+		else // target is alligned
+		{
+			m_robotDrive.arcadeDrive(.7,0 ); //drive forward
+			s_robotDrive.arcadeDrive(.7,0 );
+		}
+  }
 
 
   //elevator control code
   public void elevator()
   {
 
-	  if(PDP.getCurrent(14) < 60)
+	  if(PDP.getCurrent(14) < 60)//If the current doesnt exceed 60 amps (Avoids Stalling motors and blowing fuses) 
 	  { 
-	  	if(m_stick.getRawAxis(5)>.1 || m_stick.getRawAxis(5)<-.14)
+	  	if(m_stick.getRawAxis(5)>.1 || m_stick.getRawAxis(5)<-.14)// avoids deadzones
 	  	{
-			r_elevator.set(ControlMode.PercentOutput,-m_stick.getRawAxis(5));
+			r_elevator.set(ControlMode.PercentOutput,-m_stick.getRawAxis(5));//Elevator controlled by Right stick
 			l_elevator.set(ControlMode.PercentOutput,-m_stick.getRawAxis(5));
 	  	}
 		  else
 		  {
-			r_elevator.set(ControlMode.PercentOutput,0);
+			r_elevator.set(ControlMode.PercentOutput,0);//power to motors set to 0
 			l_elevator.set(ControlMode.PercentOutput,0);
 		  }
 	  }
@@ -229,7 +260,7 @@ public class Robot extends IterativeRobot {
   //fine control using the Dpad
   public void dPad()
   { 
-	if(m_stick.getPOV() == 0.0 )
+	if(m_stick.getPOV() == 0.0 ) 
 	{
 		m_robotDrive.arcadeDrive(.55,0);
 		s_robotDrive.arcadeDrive(.55,0);
@@ -272,50 +303,18 @@ public class Robot extends IterativeRobot {
 	SmartDashboard.putNumber("LimelightY", y);
 	SmartDashboard.putNumber("LimelightArea", area);
 
-	if(Button_1.get() == true && b==1)
+	if(Button_1.get() == true && b==1)//if limelight tracking with input is on and target is visable
 	{
-		if(m_stick.getRawAxis(2)==0)
+		if(m_stick.getRawAxis(2)==0) // If trigger right is pressed
 		{
-		intake.set(ControlMode.PercentOutput, .2);
+		intake.set(ControlMode.PercentOutput, .2);//run intake in 
 		}
-		if(x>1)
-		{
-		m_robotDrive.arcadeDrive(.7,.045*x-.045);
-		s_robotDrive.arcadeDrive(.7,.045*x-.045);
-		//System.out.println("x = " + x);
-		}
-		else if(x<1)
-		{
-		m_robotDrive.arcadeDrive(.7,.045*x+.045);
-		s_robotDrive.arcadeDrive(.7,.045*x+.045);
-		
-		}
-		else
-		{
-			m_robotDrive.arcadeDrive(.7,0 );
-			s_robotDrive.arcadeDrive(.7,0 );
-		}
+		limelightMovement();
 	}
-	else if(Button_2.get() == true && b==1)
+	else if(Button_2.get() == true && b==1) //If limelight tracking without imput is on and target is in veiw
 	{
 		
-		if(x>1)
-		{
-		m_robotDrive.arcadeDrive(0,.045*x-.045);
-		s_robotDrive.arcadeDrive(0,.045*x-.045);
-	
-		}
-		else if(x<1)
-		{
-		m_robotDrive.arcadeDrive(0,.045*x+.045);
-		s_robotDrive.arcadeDrive(0,.045*x+.045);
-		
-		}
-		else
-		{
-			m_robotDrive.arcadeDrive(0,0 );
-			s_robotDrive.arcadeDrive(0,0 );
-		}
+		limelightMovement();
 	}
 
 
@@ -389,16 +388,9 @@ public class Robot extends IterativeRobot {
 	}	
   }
 
-
-
- 
-  public void robotCode() {
-	elevator();
-	dPad();
-	drive();
-	intake();
-	pnuematics();
-	
+  //limelight pipeline control
+  public void pipelines()
+  {
 	if(Button_7.get()==true)
 	{
 		table.getEntry("pipeline").setNumber(0);
@@ -414,6 +406,18 @@ public class Robot extends IterativeRobot {
 		table.getEntry("pipeline").setNumber(2);
 		table.getEntry("camMode").setNumber(0);
 	}
+
+  }
+
+
+ 
+  public void robotCode() {
+	elevator();
+	dPad();
+	drive();
+	intake();
+	pnuematics();
+	pipelines();
   }
   /**
    * This function is called periodically during autonomous.
