@@ -25,9 +25,9 @@ import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.robot.Pixy2.LinkType;
-import frc.robot.links.Link;
-import frc.robot.links.SPILink;
+//import frc.robot.Pixy2.LinkType;
+//import frc.robot.links.Link;
+//import frc.robot.links.SPILink;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -110,7 +110,7 @@ public class Robot extends IterativeRobot {
 	private  NetworkTableEntry ta = table.getEntry("ta");
 	private  NetworkTableEntry tv = table.getEntry("tv");
 	//private UsbCamera camera1 = new UsbCamera("camera0",0);
-	private Pixy2 ourPixy = Pixy2.createInstance(LinkType.SPI);
+	//private Pixy2 ourPixy = Pixy2.createInstance(LinkType.SPI);
 	//private CameraServer camera2 = new UsbCamera(2);
 
 	private Compressor compressor = new Compressor();
@@ -132,9 +132,9 @@ public class Robot extends IterativeRobot {
 	public void robotInit() {
 	
 
-		ourPixy.init();
-		ourPixy.getFPS();
-		System.out.print(ourPixy.getFPS());
+		//ourPixy.init();
+		//ourPixy.getFPS();
+		//System.out.print(ourPixy.getFPS());
 		enc_0.setMaxPeriod(.1);
 		enc_0.setMinRate(10);
 		enc_0.setDistancePerPulse(0.94247779607/12.75*1.21);
