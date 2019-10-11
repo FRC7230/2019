@@ -46,12 +46,14 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
+
 import edu.wpi.first.wpilibj.PIDSource;
 import edu.wpi.first.wpilibj.PIDSourceType;
 import edu.wpi.first.wpilibj.PIDOutput;
 
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.PowerDistributionPanel;
+import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.buttons.POVButton;
@@ -92,11 +94,12 @@ public class Robot extends IterativeRobot {
 			 Button_11 = new JoystickButton(m_stick,11),
 			 Button_10 = new JoystickButton(m_stick,10),
 			 Button_1 = new JoystickButton(m_stick,1),
-			 Button_2 = new JoystickButton(m_stick, 2);
-	private Button Button_12 = new JoystickButton(m_stick,12),
+			 Button_2 = new JoystickButton(m_stick, 2),
+			 Button_12 = new JoystickButton(m_stick,12),
 			 Button_4 = new JoystickButton(m_stick, 4),
 			 Button_3 = new JoystickButton(m_stick, 3),
-			 Button_5 = new JoystickButton(m_stick, 5);
+			 Button_5 = new JoystickButton(m_stick, 5),
+			 Button_7_2 = new JoystickButton(m_grab,7);
 			 	private POVButton POVButton_0 = new POVButton(m_stick, 0),
 	POVButton_1 = new POVButton(m_stick, 360),
 	POVButton_3 = new POVButton(m_stick, 90),
@@ -116,6 +119,13 @@ public class Robot extends IterativeRobot {
 	private Compressor compressor = new Compressor();
 	//private DoubleSolenoid solenoid_1 = new DoubleSolenoid(0,1);
 	private DoubleSolenoid sSolenoid = new DoubleSolenoid(0,1);
+	Preferences prefs;
+	double elevator_speed;
+	double drive_speed;
+	double intake_speed;
+	double fine_drive;
+	double fine_turn;
+	double turn_speed;
 
 
 			 
@@ -181,6 +191,7 @@ public class Robot extends IterativeRobot {
 	SmartDashboard.putNumber("LimelightX", x);
 	SmartDashboard.putNumber("LimelightY", y);
 	SmartDashboard.putNumber("LimelightArea", area);
+	SmartDashboard.putBoolean("Pressure", compressor.getPressureSwitchValue());
   }
 
   /**
@@ -198,56 +209,30 @@ public class Robot extends IterativeRobot {
   public void autonomousInit() {
    
   }
-  //selecting correct pipelines for the limelight camera
-  public void limelightMovement ()
-  {
-	double X=m_stick.getX();
-	double Y= m_stick.getY();
-	double b = tv.getDouble(0.0);
-	double x = tx.getDouble(0.0);
-	double y = ty.getDouble(0.0);
-	double area = ta.getDouble(0.0);
-	
-	SmartDashboard.putNumber("LimelightTarget", b);
-	SmartDashboard.putNumber("LimelightX", x);
-	SmartDashboard.putNumber("LimelightY", y);
-	SmartDashboard.putNumber("LimelightArea", area);
-	if(x>1) // If target is on the right of the feild of view
-		{
-		m_robotDrive.arcadeDrive(.7,.045*x-.045); // Drive forward and turn right based on severity of x-value offset
-		s_robotDrive.arcadeDrive(.7,.045*x-.045);
-		//System.out.println("x = " + x);
-		}
-		else if(x<1) // If target is in left of feild of view
-		{
-		m_robotDrive.arcadeDrive(.7,.045*x+.045); // Drive forward and turn left based on severity of X offset
-		s_robotDrive.arcadeDrive(.7,.045*x+.045);
-		
-		}
-		else // target is alligned
-		{
-			m_robotDrive.arcadeDrive(.7,0 ); //drive forward
-			s_robotDrive.arcadeDrive(.7,0 );
-		}
-  }
 
 
   //elevator control code
   public void elevator()
   {
+	prefs = Preferences.getInstance();
 
-	  if(PDP.getCurrent(14) < 60)//If the current doesnt exceed 60 amps (Avoids Stalling motors and blowing fuses) 
+	  if(PDP.getCurrent(14) < 60)
 	  { 
-	  	if(m_stick.getRawAxis(5)>.1 || m_stick.getRawAxis(5)<-.14)// avoids deadzones
+	  	if(m_stick.getRawAxis(5)>.1 || m_stick.getRawAxis(5)<-.14)
 	  	{
-			r_elevator.set(ControlMode.PercentOutput,-m_stick.getRawAxis(5));//Elevator controlled by Right stick
-			l_elevator.set(ControlMode.PercentOutput,-m_stick.getRawAxis(5));
+			r_elevator.set(ControlMode.PercentOutput,-m_stick.getRawAxis(5)* prefs.getDouble("elevator_speed", 1.0));
+			l_elevator.set(ControlMode.PercentOutput,-m_stick.getRawAxis(5)* prefs.getDouble("elevator_speed", 1.0));
+		}
+		else if(m_grab.getRawAxis(0)>.1 || m_grab.getRawAxis(0)<-.14)
+	  	{
+			r_elevator.set(ControlMode.PercentOutput,-m_grab.getRawAxis(0)* prefs.getDouble("elevator_speed", 1.0));
+			l_elevator.set(ControlMode.PercentOutput,-m_grab.getRawAxis(0)* prefs.getDouble("elevator_speed", 1.0));
 	  	}
-		  else
-		  {
-			r_elevator.set(ControlMode.PercentOutput,0);//power to motors set to 0
+		else
+		{
+			r_elevator.set(ControlMode.PercentOutput,0);
 			l_elevator.set(ControlMode.PercentOutput,0);
-		  }
+		}
 	  }
 	  else
 	  {
@@ -258,41 +243,14 @@ public class Robot extends IterativeRobot {
 
 
   //fine control using the Dpad
-  public void dPad()
-  { 
-	if(m_stick.getPOV() == 0.0 ) 
-	{
-		m_robotDrive.arcadeDrive(.55,0);
-		s_robotDrive.arcadeDrive(.55,0);
-	}
-	
-	if(m_stick.getPOV() == 180.0 )
-	{
-		m_robotDrive.arcadeDrive(-.55,0);
-		s_robotDrive.arcadeDrive(-.55,0);
-	}
-	if(m_stick.getPOV() == 270.0 )
-	{
-		m_robotDrive.arcadeDrive(0,-.55);
-		s_robotDrive.arcadeDrive(0,-.55);
-	}
-	
-	if(m_stick.getPOV() == 90.0 )
-	{
-		m_robotDrive.arcadeDrive(0,.55);
-		s_robotDrive.arcadeDrive(0,.55);
-	}
-
-  }
-
-
-
+ 
 
   //robot limelight and default drive code
   public void drive()
   {
-	double X=m_stick.getX();
-	double Y= m_stick.getY();
+	prefs = Preferences.getInstance();
+	double X=m_stick.getX()* prefs.getDouble("turn_speed", 1.0);
+	double Y= m_stick.getY()* prefs.getDouble("drive_speed", 1.0);
 	double b = tv.getDouble(0.0);
 	double x = tx.getDouble(0.0);
 	double y = ty.getDouble(0.0);
@@ -303,28 +261,89 @@ public class Robot extends IterativeRobot {
 	SmartDashboard.putNumber("LimelightY", y);
 	SmartDashboard.putNumber("LimelightArea", area);
 
-	if(Button_1.get() == true && b==1)//if limelight tracking with input is on and target is visable
+	/*if(Button_1.get() == true && b==1)
 	{
-		if(m_stick.getRawAxis(2)==0) // If trigger right is pressed
+		if(m_stick.getRawAxis(2)==0)
 		{
-		intake.set(ControlMode.PercentOutput, .2);//run intake in 
+		intake.set(ControlMode.PercentOutput, .2);
 		}
-		limelightMovement();
+		if(x>1)
+		{
+		m_robotDrive.arcadeDrive(.7,.045*x-.045);
+		s_robotDrive.arcadeDrive(.7,.045*x-.045);
+		//System.out.println("x = " + x);
+		}
+		else if(x<1)
+		{
+		m_robotDrive.arcadeDrive(.7,.045*x+.045);
+		s_robotDrive.arcadeDrive(.7,.045*x+.045);
+		
+		}
+		else
+		{
+			m_robotDrive.arcadeDrive(.7,0 );
+			s_robotDrive.arcadeDrive(.7,0 );
+		}
 	}
-	else if(Button_2.get() == true && b==1) //If limelight tracking without imput is on and target is in veiw
+	else if(Button_2.get() == true && b==1)
 	{
 		
-		limelightMovement();
+		if(x>1)
+		{
+		m_robotDrive.arcadeDrive(0,.045*x-.045);
+		s_robotDrive.arcadeDrive(0,.045*x-.045);
+	
+		}
+		else if(x<1)
+		{
+		m_robotDrive.arcadeDrive(0,.045*x+.045);
+		s_robotDrive.arcadeDrive(0,.045*x+.045);
+		
+		}
+		else
+		{
+			m_robotDrive.arcadeDrive(0,0 );
+			s_robotDrive.arcadeDrive(0,0 );
+		}
 	}
-
+*/
 
 	
-	else if (m_stick.getPOV() == -1)
+	if (m_stick.getPOV() == -1)
 	{
-			
-		m_robotDrive.arcadeDrive(-Y,X);
-		s_robotDrive.arcadeDrive(-Y,X);
-    }
+		if(Y>=0){
+			m_robotDrive.arcadeDrive(Y,X);
+			s_robotDrive.arcadeDrive(Y,X);
+		}
+		if(Y<=0){
+			m_robotDrive.arcadeDrive(Y,X);
+			s_robotDrive.arcadeDrive(Y,X);
+		}
+	}
+	else { 
+		if(m_stick.getPOV() == 0.0 )
+		{
+			m_robotDrive.arcadeDrive(-prefs.getDouble("fine_drive",.55),0);
+			s_robotDrive.arcadeDrive(-prefs.getDouble("fine_drive",.55),0);
+		}
+		
+		if(m_stick.getPOV() == 180.0 )
+		{
+			m_robotDrive.arcadeDrive(prefs.getDouble("fine_drive",.55),0);
+			s_robotDrive.arcadeDrive(prefs.getDouble("fine_drive",.55),0);
+		}
+		if(m_stick.getPOV() == 270.0 )
+		{
+			m_robotDrive.arcadeDrive(0,-prefs.getDouble("fine_turn",.55));
+			s_robotDrive.arcadeDrive(0,-prefs.getDouble("fine_turn",.55));
+		}
+		
+		if(m_stick.getPOV() == 90.0 )
+		{
+			m_robotDrive.arcadeDrive(0,prefs.getDouble("fine_turn",.55));
+			s_robotDrive.arcadeDrive(0,prefs.getDouble("fine_turn",.55));
+		}
+	}
   }
 
 
@@ -341,13 +360,20 @@ public class Robot extends IterativeRobot {
 	{
 		if(m_stick.getRawAxis(2) > .1)
 		{
-			intake.set(ControlMode.PercentOutput, m_stick.getRawAxis(2)*.7);
+			intake.set(ControlMode.PercentOutput, m_stick.getRawAxis(2)* prefs.getDouble("intake_speed", 0.7));
 		}	
-	
+		else if (m_grab.getRawAxis(1) > .1)
+		{
+			intake .set(ControlMode.PercentOutput, m_stick.getRawAxis(1)* prefs.getDouble("intake_speed", 0.7));
+		}
 
 		else if(m_stick.getRawAxis(3) > .1)
 		{
-			intake.set(ControlMode.PercentOutput, -m_stick.getRawAxis(3)*.7);
+			intake.set(ControlMode.PercentOutput, -																																																																																				m_stick.getRawAxis(3)* prefs.getDouble("intake_speed", 0.7));
+		}	
+		else if(m_grab.getRawAxis(1) < -.1)
+		{
+			intake.set(ControlMode.PercentOutput, m_stick.getRawAxis(1)* prefs.getDouble("intake_speed", 0.7));
 		}	
 		else
 		{
@@ -366,12 +392,11 @@ public class Robot extends IterativeRobot {
    // pnuematics control code
   public void pnuematics()
   {
-	compressor.start();
+	if(Button_8.get() == true)
+		compressor.start();
 	if(Button_7.get() == true || compressor.getPressureSwitchValue() == true)
 	{	
-		
 		compressor.stop();
-		
 	}
 	
 	if(Button_6.get() == true)
@@ -388,9 +413,15 @@ public class Robot extends IterativeRobot {
 	}	
   }
 
-  //limelight pipeline control
-  public void pipelines()
-  {
+
+
+ 
+  public void robotCode() {
+	elevator();
+	drive();
+	intake();
+	pnuematics();
+	
 	if(Button_7.get()==true)
 	{
 		table.getEntry("pipeline").setNumber(0);
@@ -406,18 +437,6 @@ public class Robot extends IterativeRobot {
 		table.getEntry("pipeline").setNumber(2);
 		table.getEntry("camMode").setNumber(0);
 	}
-
-  }
-
-
- 
-  public void robotCode() {
-	elevator();
-	dPad();
-	drive();
-	intake();
-	pnuematics();
-	pipelines();
   }
   /**
    * This function is called periodically during autonomous.
